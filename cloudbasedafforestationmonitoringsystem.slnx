@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Afforestation.API/Afforestation.API.csproj" />
+  <Project Path="Afforestation.Core/Afforestation.Core.csproj" />
+  <Project Path="Afforestation.WebUI/Afforestation.WebUI.csproj" />
+</Solution>
