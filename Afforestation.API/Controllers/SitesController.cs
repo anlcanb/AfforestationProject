@@ -60,6 +60,7 @@ namespace Afforestation.API.Controllers
 
         public async Task<IActionResult> Update(int id, [FromBody] Site updatedSite)
         {
+            if (updatedSite == null) return BadRequest();
             if (id != updatedSite.Id) return BadRequest();
             var site = await _context.Sites.FindAsync(id);
             if (site == null) return NotFound();
