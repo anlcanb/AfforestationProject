@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 
-namespace Afforestation.Core.DTO
+namespace Afforestation.WebUI.Models.ViewModels
 {
-    public class SiteMapDataDto
+    public class SiteMapDataViewModel
     {
         public int SiteId { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-        public string City { get; set; }
-        public string District { get; set; }
+        public string City { get; set; } = string.Empty;
+        public string District { get; set; } = string.Empty;
         public int? ProductivityScore { get; set; }
         public string? Note { get; set; }
         public DateTime? ObservationDate { get; set; }

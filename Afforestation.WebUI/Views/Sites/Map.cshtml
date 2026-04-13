@@ -1,0 +1,59 @@
+@{
+    ViewData["Title"] = "Map";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+    }
+</style>
+
+<h2>Sites Map</h2>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    (async function() {
+    const map = L.map('map').setView([39.0, 35.0], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let data = [];
+    try {
+    const resp = await fetch('/Sites/MapData');
+    data = await resp.json();
+    } catch (e) {
+    console.error(e);
+    alert('Unable to load map data.');
+    return;
+    }
+
+    data.forEach(s => {
+    const score = s.productivityScore ?? -1;
+    let color = 'gray';
+
+    if (score >= 0 && score <= 40) color = 'red';
+    else if (score <= 70) color = 'orange';
+    else color = 'green';
+
+    const circle = L.circleMarker([s.latitude, s.longitude], {
+    radius: 8,
+    color: color,
+    fillColor: color,
+    fillOpacity: 0.8
+    }).addTo(map);
+
+    const popup = `<strong>${s.name}</strong><br/>${s.city} - ${s.district}<br/>` +
+    `Score: ${s.productivityScore ?? 'N/A'}<br/>Note: ${s.note ?? ''}`;
+
+    circle.bindPopup(popup);
+    });
+    })();
+</script>

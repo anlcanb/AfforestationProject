@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Afforestation.API.Data;
+using Afforestation.Core.DTO;
 using Afforestation.Core.Entities;
-using Afforestation.API.Data;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Afforestation.API.Controllers
@@ -61,7 +62,7 @@ namespace Afforestation.API.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] Site updatedSite)
         {
             if (updatedSite == null) return BadRequest();
-            if (id != updatedSite.Id) return BadRequest();
+            
             var site = await _context.Sites.FindAsync(id);
             if (site == null) return NotFound();
             site.Name = updatedSite.Name;
@@ -94,7 +95,41 @@ namespace Afforestation.API.Controllers
 
                 return Ok(observations);
             }
+
+        [HttpGet("map-data")]
+        public async Task<IActionResult> GetMapData()
+        {
+            var mapData = await _context.Sites
+                .Select(site => new SiteMapDataDto
+                {
+                    SiteId = site.Id,
+                    Name = site.Name,
+                    Latitude = site.Latitude,
+                    Longitude = site.Longitude,
+                    City = site.City,
+                    District = site.District,
+                    ProductivityScore = _context.Observations
+                        .Where(o => o.SiteId == site.Id)
+                        .OrderByDescending(o => o.Date)
+                        .Select(o => (int?)o.ProductivityScore)
+                        .FirstOrDefault(),
+                    Note = _context.Observations
+                        .Where(o => o.SiteId == site.Id)
+                        .OrderByDescending(o => o.Date)
+                        .Select(o => o.Note)
+                        .FirstOrDefault(),
+                    ObservationDate = _context.Observations
+                        .Where(o => o.SiteId == site.Id)
+                        .OrderByDescending(o => o.Date)
+                        .Select(o => (DateTime?)o.Date)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(mapData);
         }
+
     }
+}
 
 
