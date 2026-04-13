@@ -10,8 +10,8 @@ namespace Afforestation.Core.Entities
         public int SiteId { get; set; }
         public DateTime Date { get; set; }
         public int ProductivityScore { get; set; }
-        public string Note { get; set; }
-        public Site Site { get; set; }
+        public string? Note { get; set; }
+        public Site? Site { get; set; }
 
     }
 }

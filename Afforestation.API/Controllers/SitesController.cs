@@ -64,19 +64,37 @@ namespace Afforestation.API.Controllers
             if (id != updatedSite.Id) return BadRequest();
             var site = await _context.Sites.FindAsync(id);
             if (site == null) return NotFound();
-            site.Name= updatedSite.Name;
-            site.Longitude= updatedSite.Longitude;
-            site.Latitude= updatedSite.Latitude;
-            site.Status= updatedSite.Status;
-            site.District= updatedSite.District;
-            site.PlantingData= updatedSite.PlantingData;
-            site.City= updatedSite.City;
+            site.Name = updatedSite.Name;
+            site.Longitude = updatedSite.Longitude;
+            site.Latitude = updatedSite.Latitude;
+            site.Status = updatedSite.Status;
+            site.District = updatedSite.District;
+            site.PlantingData = updatedSite.PlantingData;
+            site.City = updatedSite.City;
 
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
 
+
+            [HttpGet("{siteId}/observations")]
+
+            public async Task<IActionResult> GetObservationsBySiteId(int siteId)
+            {
+                var siteExists = await _context.Sites.AnyAsync(x => x.Id == siteId);
+
+                if (!siteExists)
+                    return NotFound();
+
+                var observations = await _context.Observations
+                    .Where(x => x.SiteId == siteId)
+                    .OrderByDescending(x => x.Date)
+                    .ToListAsync();
+
+                return Ok(observations);
+            }
         }
     }
 
-}
+
