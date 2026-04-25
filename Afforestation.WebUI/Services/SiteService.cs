@@ -53,5 +53,11 @@ namespace Afforestation.WebUI.Services
             var resp = await _http.GetFromJsonAsync<IEnumerable<SiteMapDataViewModel>>("/api/sites/map-data");
             return resp ?? Enumerable.Empty<SiteMapDataViewModel>();
         }
+
+        public async Task<bool> CreateObservationAsync(ObservationViewModel model)
+        {
+            var resp = await _http.PostAsJsonAsync("/api/observations", model);
+            return resp.IsSuccessStatusCode;
+        }
     }
 }

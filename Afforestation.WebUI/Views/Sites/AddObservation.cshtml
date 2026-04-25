@@ -1,0 +1,25 @@
+@model Afforestation.WebUI.Models.ViewModels.ObservationViewModel
+
+@{
+    ViewData["Title"] = "Add Observation";
+}
+
+<h2>Add Observation</h2>
+
+<form asp-action="AddObservation" method="post">
+    <input type="hidden" asp-for="SiteId" />
+    <div class="mb-3">
+        <label asp-for="Date" class="form-label"></label>
+        <input asp-for="Date" class="form-control" type="date" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ProductivityScore" class="form-label"></label>
+        <input asp-for="ProductivityScore" class="form-control" type="number" min="0" max="100" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Note" class="form-label"></label>
+        <textarea asp-for="Note" class="form-control"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Details" asp-route-id="@Model.SiteId" class="btn btn-secondary">Cancel</a>
+</form>

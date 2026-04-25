@@ -13,5 +13,6 @@ namespace Afforestation.WebUI.Services
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<ObservationViewModel>> GetObservationsAsync(int siteId);
         Task<IEnumerable<SiteMapDataViewModel>> GetMapDataAsync();
+        Task<bool> CreateObservationAsync(ObservationViewModel model);
     }
 }

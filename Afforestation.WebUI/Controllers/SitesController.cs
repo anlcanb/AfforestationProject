@@ -112,5 +112,34 @@ namespace Afforestation.WebUI.Controllers
             var data = await _siteService.GetMapDataAsync();
             return Json(data);
         }
+
+        // --- AddObservation Feature ---
+        [HttpGet]
+        public IActionResult AddObservation(int siteId)
+        {
+            var model = new ObservationViewModel
+            {
+                SiteId = siteId,
+                Date = DateTime.Today
+            };
+            return View("AddObservation", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddObservation(ObservationViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View("AddObservation", model);
+
+
+            var success = await _siteService.CreateObservationAsync(model);
+            if (!success)
+            {
+                ModelState.AddModelError(string.Empty, "Unable to add observation.");
+                return View("AddObservation", model);
+            }
+            return RedirectToAction("Details", new { id = model.SiteId });
+        }
     }
 }
