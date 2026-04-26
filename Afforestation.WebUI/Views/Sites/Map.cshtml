@@ -1,24 +1,192 @@
 @{
-    ViewData["Title"] = "Map";
+    ViewData["Title"] = "Risk Haritası";
 }
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 
 <style>
+    .map-page {
+        padding: 18px;
+    }
+
+    .map-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .map-title h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 800;
+        color: #1f2937;
+    }
+
+    .map-title p {
+        margin: 6px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .map-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .map-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 3px 10px rgba(0,0,0,.12);
+    }
+
+    .map-btn-green {
+        background: #15803d;
+        color: white;
+    }
+
+    .map-btn-gray {
+        background: #f3f4f6;
+        color: #1f2937;
+        border: 1px solid #e5e7eb;
+    }
+
+    .map-layout {
+        position: relative;
+    }
+
     #map {
-        height: 600px;
+        height: 660px;
         width: 100%;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 28px rgba(0,0,0,.15);
+        border: 1px solid #d1d5db;
+    }
+
+    .score-marker {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 12px;
+    }
+
+    .popup-card {
+        min-width: 240px;
+        font-family: Arial, sans-serif;
+    }
+
+        .popup-card h3 {
+            margin: 0 0 8px;
+            font-size: 17px;
+            color: #111827;
+        }
+
+    .popup-row {
+        margin: 6px 0;
+        font-size: 13px;
+        color: #374151;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 999px;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    .map-legend,
+    .map-filter {
+        background: white;
+        padding: 13px 15px;
+        border-radius: 14px;
+        box-shadow: 0 5px 18px rgba(0,0,0,.22);
+        font-size: 13px;
+        color: #374151;
+    }
+
+        .map-legend strong,
+        .map-filter strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #111827;
+        }
+
+    .legend-dot {
+        display: inline-block;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        margin-right: 7px;
+    }
+
+    .filter-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 6px 0;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        .filter-row input {
+            cursor: pointer;
+        }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 14px;
     }
 </style>
 
-<h2>Sites Map</h2>
-<div id="map"></div>
+<div class="map-page">
+    <div class="map-header">
+        <div class="map-title">
+            <h2>Ağaçlandırma Sahaları Risk Haritası</h2>
+            <p>Sahalar, son gözlem verilerine göre verimlilik ve risk durumlarına ayrılmıştır.</p>
+        </div>
+
+        <div class="map-actions">
+            <button id="toggleOverlayBtn" class="map-btn map-btn-green">
+                Risk Yayılımını Göster
+            </button>
+
+            <a href="/Sites" class="map-btn map-btn-gray" style="text-decoration:none;">
+                Listeye Dön
+            </a>
+        </div>
+    </div>
+
+    <div class="map-layout">
+        <div id="map"></div>
+    </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
 <script>
-    (async function() {
-    const map = L.map('map').setView([39.0, 35.0], 6);
+    (async function () {
+    const map = L.map('map', {
+    zoomControl: true
+    }).setView([41.35, 32.75], 9);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -26,34 +194,245 @@
     }).addTo(map);
 
     let data = [];
+
     try {
     const resp = await fetch('/Sites/MapData');
     data = await resp.json();
     } catch (e) {
     console.error(e);
-    alert('Unable to load map data.');
+    alert('Harita verileri yüklenemedi.');
     return;
     }
 
-    data.forEach(s => {
-    const score = s.productivityScore ?? -1;
-    let color = 'gray';
-
-    if (score >= 0 && score <= 40) color = 'red';
-    else if (score <= 70) color = 'orange';
-    else color = 'green';
-
-    const circle = L.circleMarker([s.latitude, s.longitude], {
-    radius: 8,
-    color: color,
-    fillColor: color,
-    fillOpacity: 0.8
-    }).addTo(map);
-
-    const popup = `<strong>${s.name}</strong><br/>${s.city} - ${s.district}<br/>` +
-    `Score: ${s.productivityScore ?? 'N/A'}<br/>Note: ${s.note ?? ''}`;
-
-    circle.bindPopup(popup);
+    const markerCluster = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    maxClusterRadius: 45
     });
+
+    const overlayLayer = L.layerGroup();
+
+    let overlayVisible = false;
+
+    const filters = {
+    risk: true,
+    medium: true,
+    good: true,
+    nodata: true
+    };
+
+    function getStatus(score) {
+    if (!score || score <= 0) {
+    return {
+    key: "nodata",
+    color: "#9ca3af",
+    text: "Veri Yok",
+    radius: 900
+    };
+    }
+
+    if (score <= 40) {
+    return {
+    key: "risk",
+    color: "#dc2626",
+    text: "Riskli / Verimsiz",
+    radius: 1800
+    };
+    }
+
+    if (score <= 70) {
+    return {
+    key: "medium",
+    color: "#f59e0b",
+    text: "Orta Seviye",
+    radius: 1500
+    };
+    }
+
+    return {
+    key: "good",
+    color: "#16a34a",
+    text: "Verimli",
+    radius: 1200
+    };
+    }
+
+    function createMarker(s) {
+    const score = s.productivityScore ?? 0;
+    const status = getStatus(score);
+
+    const icon = L.divIcon({
+    html: `
+    <div class="score-marker" style="background:${status.color}">
+    ${score}
+    </div>
+    `,
+    className: "",
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+    popupAnchor: [0, -18]
+    });
+
+    return L.marker([s.latitude, s.longitude], { icon })
+    .bindPopup(`
+    <div class="popup-card">
+    <h3>${s.name}</h3>
+
+    <div class="popup-row">
+    <strong>Konum:</strong> ${s.city} - ${s.district}
+    </div>
+
+    <div class="popup-row">
+    <strong>Verimlilik Skoru:</strong> ${score}
+    </div>
+
+    <div class="popup-row">
+    <span class="status-badge" style="background:${status.color}">
+    ${status.text}
+    </span>
+    </div>
+
+    <div class="popup-row">
+    <strong>Not:</strong> ${s.note ?? '-'}
+    </div>
+    </div>
+    `);
+    }
+
+    function createOverlay(s) {
+    const score = s.productivityScore ?? 0;
+    const status = getStatus(score);
+
+    return L.circle([s.latitude, s.longitude], {
+    radius: status.radius,
+    color: status.color,
+    fillColor: status.color,
+    fillOpacity: 0.18,
+    opacity: 0.25,
+    weight: 2
+    });
+    }
+
+    function renderMap() {
+    markerCluster.clearLayers();
+    overlayLayer.clearLayers();
+
+    data.forEach(s => {
+    const score = s.productivityScore ?? 0;
+    const status = getStatus(score);
+
+    if (!filters[status.key]) return;
+
+    markerCluster.addLayer(createMarker(s));
+
+    if (overlayVisible) {
+    overlayLayer.addLayer(createOverlay(s));
+    }
+    });
+
+    if (!map.hasLayer(markerCluster)) {
+    map.addLayer(markerCluster);
+    }
+
+    if (overlayVisible) {
+    if (!map.hasLayer(overlayLayer)) {
+    map.addLayer(overlayLayer);
+    }
+    overlayLayer.bringToBack();
+    } else {
+    if (map.hasLayer(overlayLayer)) {
+    map.removeLayer(overlayLayer);
+    }
+    }
+    }
+
+    renderMap();
+
+    if (data.length > 0) {
+    const bounds = markerCluster.getBounds();
+
+    if (bounds.isValid()) {
+    map.fitBounds(bounds, {
+    padding: [45, 45],
+    maxZoom: 11
+    });
+    }
+    }
+
+    document.getElementById('toggleOverlayBtn').addEventListener('click', function () {
+    overlayVisible = !overlayVisible;
+
+    this.innerText = overlayVisible
+    ? "Risk Yayılımını Gizle"
+    : "Risk Yayılımını Göster";
+
+    renderMap();
+    });
+
+    const filterControl = L.control({ position: "topright" });
+
+    filterControl.onAdd = function () {
+    const div = L.DomUtil.create("div", "map-filter");
+
+    div.innerHTML = `
+    <strong>Filtreler</strong>
+
+    <label class="filter-row">
+    <input type="checkbox" data-filter="risk" checked />
+    <span class="legend-dot" style="background:#dc2626"></span>
+    Riskli
+    </label>
+
+    <label class="filter-row">
+    <input type="checkbox" data-filter="medium" checked />
+    <span class="legend-dot" style="background:#f59e0b"></span>
+    Orta
+    </label>
+
+    <label class="filter-row">
+    <input type="checkbox" data-filter="good" checked />
+    <span class="legend-dot" style="background:#16a34a"></span>
+    Verimli
+    </label>
+
+    <label class="filter-row">
+    <input type="checkbox" data-filter="nodata" checked />
+    <span class="legend-dot" style="background:#9ca3af"></span>
+    Veri Yok
+    </label>
+    `;
+
+    L.DomEvent.disableClickPropagation(div);
+
+    setTimeout(() => {
+    div.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.addEventListener('change', function () {
+    filters[this.dataset.filter] = this.checked;
+    renderMap();
+    });
+    });
+    }, 0);
+
+    return div;
+    };
+
+    filterControl.addTo(map);
+
+    const legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = function () {
+    const div = L.DomUtil.create("div", "map-legend");
+
+    div.innerHTML = `
+    <strong>Risk Durumu</strong>
+    <div><span class="legend-dot" style="background:#dc2626"></span>0 - 40 Riskli</div>
+    <div><span class="legend-dot" style="background:#f59e0b"></span>41 - 70 Orta</div>
+    <div><span class="legend-dot" style="background:#16a34a"></span>71+ Verimli</div>
+    <div><span class="legend-dot" style="background:#9ca3af"></span>Veri Yok</div>
+    `;
+
+    return div;
+    };
+
+    legend.addTo(map);
     })();
 </script>
