@@ -2,43 +2,543 @@
 
 @{
     ViewData["Title"] = "Sites";
+
+    var totalSites = Model.Count();
+    var activeSites = Model.Count(x => x.Status == "Active");
+    var monitoringSites = Model.Count(x => x.Status == "Monitoring");
+    var needsCareSites = Model.Count(x => x.Status == "NeedsCare");
 }
 
-<div class="d-flex justify-content-between mb-3">
-    <h2>Sites</h2>
-    <a class="btn btn-primary" asp-action="Create">Create Site</a>
-</div>
+<style>
+    body {
+        background: #f3f6f4;
+    }
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>City</th>
-            <th>District</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var s in Model)
-        {
-            <tr>
-                <td>@s.Name</td>
-                <td>@s.City</td>
-                <td>@s.District</td>
-                <td>@s.Status</td>
-                <td>
-                    <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@s.Id">Details</a>
-                    <a class="btn btn-sm btn-secondary" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
-                    <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
-                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
+    .sites-page {
+        padding: 28px 18px 40px;
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .hero-panel {
+        background: linear-gradient(135deg, #0f5132, #166534);
+        color: white;
+        border-radius: 24px;
+        padding: 28px;
+        margin-bottom: 22px;
+        box-shadow: 0 14px 35px rgba(15, 81, 50, .25);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .hero-kicker {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #bbf7d0;
+        margin-bottom: 8px;
+    }
+
+    .hero-panel h2 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 900;
+    }
+
+    .hero-panel p {
+        margin: 8px 0 0;
+        color: #dcfce7;
+        font-size: 14px;
+        max-width: 680px;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .hero-btn {
+        border-radius: 12px;
+        padding: 11px 15px;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        box-shadow: 0 6px 16px rgba(0,0,0,.18);
+        white-space: nowrap;
+    }
+
+    .hero-btn-primary {
+        background: white;
+        color: #14532d;
+    }
+
+    .hero-btn-secondary {
+        background: rgba(255,255,255,.14);
+        color: white;
+        border: 1px solid rgba(255,255,255,.25);
+    }
+
+    .hero-btn:hover {
+        opacity: .92;
+        color: inherit;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .stat-card {
+        background: rgba(255,255,255,.92);
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
+    }
+
+    .stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .stat-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 950;
+        color: #0f172a;
+        line-height: 1;
+    }
+
+    .stat-caption {
+        margin-top: 8px;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .icon-blue {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .icon-green {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .icon-orange {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .icon-red {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .content-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 14px 35px rgba(15, 23, 42, .09);
+    }
+
+    .content-card-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        background: #ffffff;
+    }
+
+        .content-card-header h3 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 900;
+            color: #0f172a;
         }
-    </tbody>
-</table>
 
-<div class="mt-4">
-    <a class="btn btn-success" asp-action="Map">View Map</a>
+        .content-card-header p {
+            margin: 5px 0 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+    .table-tools {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .search-box {
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 13px;
+        min-width: 230px;
+        outline: none;
+    }
+
+        .search-box:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, .12);
+        }
+
+    .sites-table {
+        margin: 0;
+    }
+
+        .sites-table thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            font-weight: 900;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 15px 18px;
+        }
+
+        .sites-table tbody tr {
+            transition: background .15s ease;
+        }
+
+            .sites-table tbody tr:hover {
+                background: #f8fafc;
+            }
+
+        .sites-table tbody td {
+            padding: 16px 18px;
+            vertical-align: middle;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 14px;
+            color: #334155;
+        }
+
+    .site-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .site-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
+        background: #dcfce7;
+        color: #166534;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+    .site-name {
+        font-weight: 900;
+        color: #0f172a;
+    }
+
+    .site-sub {
+        color: #64748b;
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .location-text {
+        color: #64748b;
+        font-size: 13px;
+        margin-top: 2px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+        .status-active .status-dot {
+            background: #16a34a;
+        }
+
+    .status-monitoring {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+        .status-monitoring .status-dot {
+            background: #f59e0b;
+        }
+
+    .status-needscare {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+        .status-needscare .status-dot {
+            background: #dc2626;
+        }
+
+    .status-default {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+        .status-default .status-dot {
+            background: #6b7280;
+        }
+
+    .table-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .small-action {
+        border-radius: 10px;
+        padding: 7px 11px;
+        font-size: 12px;
+        font-weight: 850;
+        text-decoration: none;
+        border: none;
+        transition: transform .12s ease, opacity .12s ease;
+    }
+
+        .small-action:hover {
+            transform: translateY(-1px);
+            opacity: .92;
+            color: white;
+        }
+
+    .small-details {
+        background: #0891b2;
+        color: white;
+    }
+
+    .small-edit {
+        background: #475569;
+        color: white;
+    }
+
+    .small-delete {
+        background: #dc2626;
+        color: white;
+    }
+
+    @@media (max-width: 1000px) {
+        .hero-panel {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .hero-actions {
+            justify-content: flex-start;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .content-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .search-box {
+            width: 100%;
+            min-width: 0;
+        }
+    }
+</style>
+
+<div class="sites-page">
+    <section class="hero-panel">
+        <div>
+            <div class="hero-kicker">Cloud Based Afforestation Monitoring System</div>
+            <h2>Afforestation Sites Management</h2>
+            <p>
+                Manage afforestation sites, monitor field conditions and support decision-making
+                through geospatial risk analytics.
+            </p>
+        </div>
+
+        <div class="hero-actions">
+            <a class="hero-btn hero-btn-secondary" asp-action="Map">View Risk Map</a>
+            <a class="hero-btn hero-btn-primary" asp-action="Create">Create Site</a>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">Total Sites</div>
+                <div class="stat-icon icon-blue">Σ</div>
+            </div>
+            <div class="stat-value">@totalSites</div>
+            <div class="stat-caption">Registered monitoring locations</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">Active</div>
+                <div class="stat-icon icon-green">✓</div>
+            </div>
+            <div class="stat-value">@activeSites</div>
+            <div class="stat-caption">Healthy or stable sites</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">Monitoring</div>
+                <div class="stat-icon icon-orange">!</div>
+            </div>
+            <div class="stat-value">@monitoringSites</div>
+            <div class="stat-caption">Sites under observation</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">Needs Care</div>
+                <div class="stat-icon icon-red">⚠</div>
+            </div>
+            <div class="stat-value">@needsCareSites</div>
+            <div class="stat-caption">Requires field attention</div>
+        </div>
+    </section>
+
+    <section class="content-card">
+        <div class="content-card-header">
+            <div>
+                <h3>Registered Afforestation Sites</h3>
+                <p>Overview of all monitored sites and their current operational status.</p>
+            </div>
+
+            <div class="table-tools">
+                <input id="siteSearch" class="search-box" type="text" placeholder="Search by site, city or district..." />
+            </div>
+        </div>
+
+        <table class="table sites-table" id="sitesTable">
+            <thead>
+                <tr>
+                    <th>Site</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    var statusClass = s.Status switch
+                    {
+                        "Active" => "status-active",
+                        "Monitoring" => "status-monitoring",
+                        "NeedsCare" => "status-needscare",
+                        _ => "status-default"
+                    };
+
+                    var statusText = s.Status switch
+                    {
+                        "Active" => "Active",
+                        "Monitoring" => "Monitoring",
+                        "NeedsCare" => "Needs Care",
+                        _ => s.Status
+                    };
+
+                    var initial = string.IsNullOrWhiteSpace(s.Name) ? "S" : s.Name.Substring(0, 1).ToUpper();
+
+                    <tr>
+                        <td>
+                            <div class="site-cell">
+                                <div class="site-avatar">@initial</div>
+                                <div>
+                                    <div class="site-name">@s.Name</div>
+                                    <div class="site-sub">Afforestation field record</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div>@s.City</div>
+                            <div class="location-text">@s.District</div>
+                        </td>
+
+                        <td>
+                            <span class="status-badge @statusClass">
+                                <span class="status-dot"></span>
+                                @statusText
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="table-actions">
+                                <a class="small-action small-details" asp-action="Details" asp-route-id="@s.Id">Details</a>
+                                <a class="small-action small-edit" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+
+                                <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this site?');">
+                                    <button class="small-action small-delete" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
 </div>
+
+<script>
+    document.getElementById("siteSearch").addEventListener("keyup", function () {
+        const value = this.value.toLowerCase();
+        const rows = document.querySelectorAll("#sitesTable tbody tr");
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(value) ? "" : "none";
+        });
+    });
+</script>
