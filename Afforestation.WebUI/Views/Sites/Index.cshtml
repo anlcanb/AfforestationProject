@@ -2,11 +2,10 @@
 
 @{
     ViewData["Title"] = "Sites";
-
     var totalSites = Model.Count();
-    var activeSites = Model.Count(x => x.Status == "Active");
-    var monitoringSites = Model.Count(x => x.Status == "Monitoring");
-    var needsCareSites = Model.Count(x => x.Status == "NeedsCare");
+    var activeSites = Model.Count(x => x.Status == "Aktif" || x.Status == "Active");
+    var monitoringSites = Model.Count(x => x.Status == "İzleniyor" || x.Status == "Monitoring");
+    var needsCareSites = Model.Count(x => x.Status == "Bakım Gerekli" || x.Status == "NeedsCare");
 }
 
 <style>
@@ -396,77 +395,77 @@
 <div class="sites-page">
     <section class="hero-panel">
         <div>
-            <div class="hero-kicker">Cloud Based Afforestation Monitoring System</div>
-            <h2>Afforestation Sites Management</h2>
+            <div class="hero-kicker">Bulut Tabanlı Ağaçlandırma İzleme Sistemi</div>
+            <h2>Ağaçlandırma Sahaları Yönetimi</h2>
             <p>
-                Manage afforestation sites, monitor field conditions and support decision-making
-                through geospatial risk analytics.
+                Ağaçlandırma sahalarını yönetin, saha durumlarını izleyin ve
+                coğrafi risk analizleri ile karar destek sağlayın.
             </p>
         </div>
 
         <div class="hero-actions">
-            <a class="hero-btn hero-btn-secondary" asp-action="Map">View Risk Map</a>
-            <a class="hero-btn hero-btn-primary" asp-action="Create">Create Site</a>
+            <a class="hero-btn hero-btn-secondary" asp-action="Map">Risk Haritasını Gör</a>
+            <a class="hero-btn hero-btn-primary" asp-action="Create">Yeni Saha Ekle</a>
         </div>
     </section>
 
     <section class="stats-grid">
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">Total Sites</div>
+                <div class="stat-label">Toplam Saha</div>
                 <div class="stat-icon icon-blue">Σ</div>
             </div>
             <div class="stat-value">@totalSites</div>
-            <div class="stat-caption">Registered monitoring locations</div>
+            <div class="stat-caption">Kayıtlı saha sayısı</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">Active</div>
+                <div class="stat-label">Aktif</div>
                 <div class="stat-icon icon-green">✓</div>
             </div>
             <div class="stat-value">@activeSites</div>
-            <div class="stat-caption">Healthy or stable sites</div>
+            <div class="stat-caption">Sağlıklı sahalar</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">Monitoring</div>
+                <div class="stat-label">İzleniyor</div>
                 <div class="stat-icon icon-orange">!</div>
             </div>
             <div class="stat-value">@monitoringSites</div>
-            <div class="stat-caption">Sites under observation</div>
+            <div class="stat-caption">İzlenen sahalar</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">Needs Care</div>
+                <div class="stat-label">Bakım Gerekli</div>
                 <div class="stat-icon icon-red">⚠</div>
             </div>
             <div class="stat-value">@needsCareSites</div>
-            <div class="stat-caption">Requires field attention</div>
+            <div class="stat-caption">Müdahale gereken sahalar</div>
         </div>
     </section>
 
     <section class="content-card">
         <div class="content-card-header">
             <div>
-                <h3>Registered Afforestation Sites</h3>
-                <p>Overview of all monitored sites and their current operational status.</p>
+                <h3>Kayıtlı Ağaçlandırma Sahaları</h3>
+                <p>Tüm sahaların genel durumu</p>
             </div>
 
             <div class="table-tools">
-                <input id="siteSearch" class="search-box" type="text" placeholder="Search by site, city or district..." />
+                <input id="siteSearch" class="search-box" type="text" placeholder="Saha, şehir veya ilçe ara" />
             </div>
         </div>
 
         <table class="table sites-table" id="sitesTable">
             <thead>
                 <tr>
-                    <th>Site</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
+                    <th>Saha</th>
+                    <th>Konum</th>
+                    <th>Durum</th>
+                    <th class="text-end">İşlemler</th>
                 </tr>
             </thead>
 
@@ -475,17 +474,17 @@
                 {
                     var statusClass = s.Status switch
                     {
-                        "Active" => "status-active",
-                        "Monitoring" => "status-monitoring",
-                        "NeedsCare" => "status-needscare",
+                        "Aktif" => "status-active",
+                        "İzleniyor" => "status-monitoring",
+                        "Bakım Gerekli" => "status-needscare",
                         _ => "status-default"
                     };
 
                     var statusText = s.Status switch
                     {
-                        "Active" => "Active",
-                        "Monitoring" => "Monitoring",
-                        "NeedsCare" => "Needs Care",
+                        "Active" => "Aktif",
+                        "Monitoring" => "İzleniyor",
+                        "NeedsCare" => "Bakım Gerekli",
                         _ => s.Status
                     };
 
@@ -497,7 +496,7 @@
                                 <div class="site-avatar">@initial</div>
                                 <div>
                                     <div class="site-name">@s.Name</div>
-                                    <div class="site-sub">Afforestation field record</div>
+                                    <div class="site-sub">Ağaçlandırma saha kaydı</div>
                                 </div>
                             </div>
                         </td>
@@ -516,11 +515,12 @@
 
                         <td>
                             <div class="table-actions">
-                                <a class="small-action small-details" asp-action="Details" asp-route-id="@s.Id">Details</a>
-                                <a class="small-action small-edit" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+                                <a class="small-action small-details" asp-action="Details" asp-route-id="@s.Id">Detay</a>
+                                <a class="small-action small-edit" asp-action="Edit" asp-route-id="@s.Id">Düzenle</a>
 
-                                <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this site?');">
-                                    <button class="small-action small-delete" type="submit">Delete</button>
+                                <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Bu sahayı silmek istediğinize emin misiniz?');">
+                                    <button class="small-action small-delete" type="submit">Sil</button>
                                 </form>
                             </div>
                         </td>

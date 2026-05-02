@@ -1,8 +1,8 @@
 ﻿using Afforestation.API.Data;
-using Microsoft.AspNetCore.Http;
+using Afforestation.Core.DTO;
+using Afforestation.Core.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Afforestation.Core.Entities;
 
 namespace Afforestation.API.Controllers
 {
@@ -16,59 +16,111 @@ namespace Afforestation.API.Controllers
         {
             _context = context;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var obser = await _context.Observations.ToListAsync();
-            return Ok(obser);
+            var observations = await _context.Observations
+                .Select(o => new ObservationDto
+                {
+                    Id = o.Id,
+                    SiteId = o.SiteId,
+                    Date = o.Date,
+                    ProductivityScore = o.ProductivityScore,
+                    Note = o.Note
+                })
+                .ToListAsync();
+
+            return Ok(observations);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var obser = await _context.Observations.FindAsync(id);
-            if (obser == null) return NotFound();
-            return Ok(obser);
-        }
-        [HttpPost]
+            var observation = await _context.Observations
+                .Where(o => o.Id == id)
+                .Select(o => new ObservationDto
+                {
+                    Id = o.Id,
+                    SiteId = o.SiteId,
+                    Date = o.Date,
+                    ProductivityScore = o.ProductivityScore,
+                    Note = o.Note
+                })
+                .FirstOrDefaultAsync();
 
-        public async Task<IActionResult> Create([FromBody] Observation observation)
+            if (observation == null)
+                return NotFound();
+
+            return Ok(observation);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateObservationDto dto)
         {
+            if (dto.ProductivityScore < 0 || dto.ProductivityScore > 100)
+                return BadRequest("Productivity score must be between 0 and 100.");
+
+            var siteExists = await _context.Sites.AnyAsync(s => s.Id == dto.SiteId);
+
+            if (!siteExists)
+                return BadRequest("Invalid site id.");
+
+            var observation = new Observation
+            {
+                SiteId = dto.SiteId,
+                Date = dto.Date,
+                ProductivityScore = dto.ProductivityScore,
+                Note = dto.Note
+            };
+
             _context.Observations.Add(observation);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(Create), new { id = observation.Id }, observation);
-        }
 
-        [HttpDelete("{id}")]
+            var response = new ObservationDto
+            {
+                Id = observation.Id,
+                SiteId = observation.SiteId,
+                Date = observation.Date,
+                ProductivityScore = observation.ProductivityScore,
+                Note = observation.Note
+            };
 
-        public async Task<IActionResult> Delete(int id)
-        {
-            var obser = await _context.Observations.FindAsync(id);
-            if(obser==null) return NotFound();
-            _context.Observations.Remove(obser);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return CreatedAtAction(nameof(GetById), new { id = observation.Id }, response);
         }
 
         [HttpPut("{id}")]
-
-        public async Task<IActionResult> Update(int id, [FromBody] Observation updatedObservation)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateObservationDto dto)
         {
-            if (updatedObservation == null) return NotFound();
-            if (id != updatedObservation.Id) return BadRequest(nameof(id));
+            if (dto.ProductivityScore < 0 || dto.ProductivityScore > 100)
+                return BadRequest("Productivity score must be between 0 and 100.");
 
-            var obser = await _context.Observations.FindAsync(id);
-            if (obser == null) return NotFound();
+            var observation = await _context.Observations.FindAsync(id);
 
-            obser.Note = updatedObservation.Note;
-            obser.Site = updatedObservation.Site;
-            obser.Date = updatedObservation.Date;
-            obser.ProductivityScore = updatedObservation.ProductivityScore;
-            obser.SiteId = updatedObservation.SiteId;
+            if (observation == null)
+                return NotFound();
+
+            observation.Date = dto.Date;
+            observation.ProductivityScore = dto.ProductivityScore;
+            observation.Note = dto.Note;
+
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
-        
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var observation = await _context.Observations.FindAsync(id);
+
+            if (observation == null)
+                return NotFound();
+
+            _context.Observations.Remove(observation);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
