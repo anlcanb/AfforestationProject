@@ -83,7 +83,7 @@ namespace Afforestation.WebUI.Controllers
                 ModelState.AddModelError(string.Empty, "Unable to update site.");
                 return View(model);
             }
-
+            
             return RedirectToAction(nameof(Details), new { id });
         }
 

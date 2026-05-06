@@ -9,6 +9,10 @@
 <form asp-action="Edit" method="post">
     <input type="hidden" name="id" value="@ViewContext.RouteData.Values["id"]" />
 
+ 
+    <span asp-validation-for="Latitude" class="text-danger"></span>
+    <span asp-validation-for="Longitude" class="text-danger"></span>
+
     <div class="mb-3">
         <label asp-for="Name" class="form-label">Saha Adı</label>
         <input asp-for="Name" class="form-control" />

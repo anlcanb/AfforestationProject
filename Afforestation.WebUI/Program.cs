@@ -1,4 +1,6 @@
 using Afforestation.WebUI.Services;
+using System.Globalization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,11 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+var culture = new CultureInfo("en-US");
+
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 app.MapControllerRoute(
     name: "default",
